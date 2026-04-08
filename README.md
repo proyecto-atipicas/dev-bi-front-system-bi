@@ -1,4 +1,4 @@
-# Actores Electorales — Portal
+# Herramientas Data Bi - CNE — Portal
 
 Aplicación web (Next.js) que protege el acceso con token y muestra un menú de módulos externos (AppBI, Seguimiento PMO, Embebidos Públicos). Los enlaces se abren en una nueva pestaña.
 

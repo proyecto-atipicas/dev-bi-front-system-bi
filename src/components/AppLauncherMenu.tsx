@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
-import { ExternalLink, LayoutGrid, LineChart, Settings, SquareStack } from 'lucide-react';
+import { BarChart3, Bot, ExternalLink, FileDown, LayoutGrid, LineChart, Settings, SquareStack } from 'lucide-react';
 import { API } from '@/lib/constants';
 
 export type LauncherItem = {
@@ -43,6 +43,31 @@ const ITEMS: LauncherItem[] = [
     icon: LayoutGrid,
     iconClass: 'text-sky-600',
     href: 'https://congreso2026.actoreselectorales.com/',
+  },
+  {
+    id: 'bot-trafico',
+    title: 'Bot Tráfico',
+    description: 'Generador de tráfico para el módulo de capacitaciones.',
+    icon: Bot,
+    iconClass: 'text-amber-600',
+    href: 'https://botbi.actoreselectorales.com/',
+  },
+  {
+    id: 'descarga-credenciales',
+    title: 'Descarga de Credenciales',
+    description:
+      'Herramienta para la descarga de resoluciones y credenciales del sistema CNE.',
+    icon: FileDown,
+    iconClass: 'text-teal-600',
+    comingSoon: true,
+  },
+  {
+    id: 'analitica-presidencia',
+    title: 'Analítica de Presidencia',
+    description: 'Herramienta de análisis de elecciones presidenciales históricas.',
+    icon: BarChart3,
+    iconClass: 'text-rose-600',
+    href: 'https://analisis-presidencia-colombia.vercel.app/',
   },
   {
     id: 'configuracion',
@@ -112,7 +137,7 @@ function LauncherCard({ item }: { item: LauncherItem }) {
   );
 }
 
-export function AppLauncherMenu({ appTitle = 'Actores Electorales', onLogout }: AppLauncherMenuProps) {
+export function AppLauncherMenu({ appTitle = 'Herramientas Data BI - CNE', onLogout }: AppLauncherMenuProps) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleCerrarSesion = async () => {
@@ -153,9 +178,9 @@ export function AppLauncherMenu({ appTitle = 'Actores Electorales', onLogout }: 
           <p className="text-sm text-gray-500 mt-1">Seleccione un módulo. Los enlaces se abren en una nueva pestaña.</p>
         </header>
 
-        <div className="max-w-4xl mx-auto w-full flex-1 px-5 sm:px-8 pb-8">
+        <div className="max-w-5xl mx-auto w-full flex-1 px-5 sm:px-8 pb-8">
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
             role="navigation"
             aria-label="Módulos del proyecto"
           >
