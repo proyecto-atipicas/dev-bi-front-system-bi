@@ -94,7 +94,7 @@ const ITEMS: LauncherItem[] = [
     description: 'Cronograma de planeación de las tareas del área.',
     icon: CalendarDays,
     iconClass: 'text-orange-600',
-    comingSoon: true,
+    href: 'https://proyecto-atipicas.github.io/dev-bi-cronograma-actividades-v1/',
   },
   {
     id: 'configuracion',
