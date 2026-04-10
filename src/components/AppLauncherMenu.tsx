@@ -111,6 +111,8 @@ type AppLauncherMenuProps = {
   onLogout?: () => void | Promise<void>;
 };
 
+const SENSITIVE_LABELS = new Set(['contraseña', 'token', 'password']);
+
 function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClose: () => void }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
@@ -125,6 +127,9 @@ function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClos
       setTimeout(() => setCopiedIdx(null), 1500);
     } catch { /* clipboard not available */ }
   };
+
+  const isSensitive = (label: string) => SENSITIVE_LABELS.has(label.toLowerCase());
+  const mask = (value: string) => '•'.repeat(Math.max(value.length, 8));
 
   return (
     <div
@@ -154,13 +159,15 @@ function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClos
           {item.credentials.map((cred, idx) => (
             <div
               key={cred.label}
-              className="flex items-center gap-2 bg-gray-50 rounded-xl px-3.5 py-2.5 border border-gray-100"
+              className="flex items-center gap-1.5 bg-gray-50 rounded-xl px-3.5 py-2.5 border border-gray-100"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
                   {cred.label}
                 </p>
-                <p className="text-sm font-mono text-gray-800 mt-0.5 truncate">{cred.value}</p>
+                <p className="text-sm font-mono text-gray-800 mt-0.5 truncate select-none">
+                  {isSensitive(cred.label) ? mask(cred.value) : cred.value}
+                </p>
               </div>
               <button
                 onClick={() => handleCopy(cred.value, idx)}
