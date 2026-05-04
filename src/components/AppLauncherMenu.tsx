@@ -1,9 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, BookOpen, Bot, CalendarDays, Check, Copy, ExternalLink, FileDown, KeyRound, LayoutGrid, LineChart, Settings, SquareStack, X } from 'lucide-react';
+import {
+  BarChart3,
+  BookOpen,
+  Bot,
+  CalendarDays,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  FileDown,
+  KeyRound,
+  LayoutGrid,
+  LineChart,
+  Settings,
+  SquareStack,
+  X,
+} from 'lucide-react';
 import { API } from '@/lib/constants';
 
 export type LauncherItem = {
@@ -18,6 +35,18 @@ export type LauncherItem = {
 };
 
 const ITEMS: LauncherItem[] = [
+  {
+    id: 'simae',
+    title: 'SIMAE',
+    description:
+      'Tablero de experiencia SIMAE (Sistema Integral de monitoreo y analitica electoral).',
+    icon: SquareStack,
+    iconClass: 'text-violet-600',
+    href: 'https://simae.actoreselectorales.com/',
+    credentials: [
+      { label: 'Contraseña', value: 'Pr351d3nc14*2026' },
+    ],
+  },
   {
     id: 'appbi',
     title: 'AppBI',
@@ -37,7 +66,7 @@ const ITEMS: LauncherItem[] = [
     description: 'Aplicación de monitoreo interno.',
     icon: LineChart,
     iconClass: 'text-emerald-600',
-    href: 'https://seguimiento-pmo.actoreselectorales.com/',
+    href: 'https://seguimiento-data.actoreselectorales.com/',
     credentials: [
       { label: 'Usuario', value: 'admin' },
       { label: 'Contraseña', value: 'Admin123!' },
@@ -50,7 +79,7 @@ const ITEMS: LauncherItem[] = [
       'Aplicación donde se encuentran embebidos los tableros de Power BI, tanto congreso como consulta.',
     icon: LayoutGrid,
     iconClass: 'text-sky-600',
-    href: 'https://congreso2026.actoreselectorales.com/',
+    href: 'https://presidencia2026.actoreselectorales.com/',
     credentials: [{ label: 'Token', value: 'Eleccioones2026*' }],
   },
   {
@@ -113,8 +142,40 @@ type AppLauncherMenuProps = {
 
 const SENSITIVE_LABELS = new Set(['contraseña', 'token', 'password']);
 
+/** Carga el `src` del iframe solo cuando el contenedor entra en vista (evita abrir muchas apps a la vez). */
+function useLazyIframeSrc(url: string | undefined) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [src, setSrc] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!url) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setSrc(url);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '120px', threshold: 0.01 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [url]);
+
+  return { containerRef, src };
+}
+
 function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClose: () => void }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    setRevealed({});
+    setCopiedIdx(null);
+  }, [item]);
 
   if (!item?.credentials?.length) return null;
 
@@ -130,6 +191,10 @@ function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClos
 
   const isSensitive = (label: string) => SENSITIVE_LABELS.has(label.toLowerCase());
   const mask = (value: string) => '•'.repeat(Math.max(value.length, 8));
+
+  const toggleReveal = (idx: number) => {
+    setRevealed((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   return (
     <div
@@ -165,11 +230,31 @@ function CredentialsModal({ item, onClose }: { item: LauncherItem | null; onClos
                 <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
                   {cred.label}
                 </p>
-                <p className="text-sm font-mono text-gray-800 mt-0.5 truncate select-none">
-                  {isSensitive(cred.label) ? mask(cred.value) : cred.value}
+                <p
+                  className={`text-sm font-mono text-gray-800 mt-0.5 truncate ${
+                    isSensitive(cred.label) && !revealed[idx] ? 'select-none' : ''
+                  }`}
+                >
+                  {isSensitive(cred.label) && !revealed[idx] ? mask(cred.value) : cred.value}
                 </p>
               </div>
+              {isSensitive(cred.label) && (
+                <button
+                  type="button"
+                  onClick={() => toggleReveal(idx)}
+                  className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white hover:shadow-sm transition-all"
+                  title={revealed[idx] ? `Ocultar ${cred.label.toLowerCase()}` : `Mostrar ${cred.label.toLowerCase()}`}
+                  aria-pressed={!!revealed[idx]}
+                >
+                  {revealed[idx] ? (
+                    <EyeOff className="w-3.5 h-3.5" aria-hidden />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" aria-hidden />
+                  )}
+                </button>
+              )}
               <button
+                type="button"
                 onClick={() => handleCopy(cred.value, idx)}
                 className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white hover:shadow-sm transition-all"
                 title={`Copiar ${cred.label}`}
@@ -197,6 +282,9 @@ function LauncherCard({
 }) {
   const Icon = item.icon;
   const disabled = item.comingSoon || !item.href;
+  const { containerRef: previewRef, src: previewSrc } = useLazyIframeSrc(
+    disabled ? undefined : item.href
+  );
 
   const handleCredentialsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -204,7 +292,32 @@ function LauncherCard({
     onShowCredentials?.();
   };
 
-  const inner = (
+  const previewBlock =
+    !disabled && item.href ? (
+      <div
+        ref={previewRef}
+        className="relative w-full h-[140px] sm:h-[150px] shrink-0 overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 border-b border-gray-100"
+      >
+        {previewSrc ? (
+          <iframe
+            title={`Vista previa de ${item.title}`}
+            src={previewSrc}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="absolute left-0 top-0 h-[480px] w-[min(1280px,220%)] max-w-none origin-top-left scale-[0.34] sm:scale-[0.36] pointer-events-none border-0"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-[11px] text-gray-400">
+            Cargando vista previa…
+          </div>
+        )}
+        <p className="absolute bottom-1.5 left-2 right-2 text-[10px] text-gray-400/90 leading-tight pointer-events-none">
+          
+        </p>
+      </div>
+    ) : null;
+
+  const linkBody = (
     <>
       <div
         className={`w-[84px] h-[84px] sm:w-[92px] sm:h-[92px] rounded-[10px] border flex items-center justify-center transition-all duration-200 shrink-0 ${
@@ -219,16 +332,6 @@ function LauncherCard({
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[15px] sm:text-base font-semibold text-gray-800">{item.title}</span>
-          {!!item.credentials?.length && (
-            <button
-              type="button"
-              onClick={handleCredentialsClick}
-              className="p-1 rounded-md text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-              title="Ver credenciales"
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-            </button>
-          )}
           {!disabled && (
             <ExternalLink className="w-3.5 h-3.5 text-gray-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
           )}
@@ -239,27 +342,46 @@ function LauncherCard({
     </>
   );
 
-  const className =
-    'group flex flex-row sm:flex-col items-start sm:items-center gap-4 sm:gap-3 w-full min-w-0 rounded-xl p-4 sm:p-5 border border-transparent hover:border-gray-200 hover:bg-gray-50/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+  const cardShell =
+    'group flex flex-col w-full min-w-0 rounded-xl border border-transparent overflow-hidden hover:border-gray-200 hover:bg-gray-50/80 transition-colors';
+
+  const rowClass =
+    'flex flex-row sm:flex-col items-start sm:items-center gap-4 sm:gap-3 w-full p-4 sm:p-5 min-h-0';
 
   if (disabled) {
     return (
-      <div className={`${className} cursor-not-allowed opacity-90`} aria-disabled="true">
-        {inner}
+      <div className={`${cardShell} cursor-not-allowed opacity-90`} aria-disabled="true">
+        {previewBlock}
+        <div className={`${rowClass}`}>{linkBody}</div>
       </div>
     );
   }
 
   return (
-    <a
-      href={item.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={className}
-      title={`Abrir ${item.title} en una nueva pestaña`}
-    >
-      {inner}
-    </a>
+    <div className={cardShell}>
+      {previewBlock}
+      <div className={`${rowClass} items-start`}>
+        <a
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex flex-row sm:flex-col items-start sm:items-center gap-4 sm:gap-3 flex-1 min-w-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          title={`Abrir ${item.title} en una nueva pestaña`}
+        >
+          {linkBody}
+        </a>
+        {!!item.credentials?.length && (
+          <button
+            type="button"
+            onClick={handleCredentialsClick}
+            className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors sm:mt-1"
+            title="Ver credenciales"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
