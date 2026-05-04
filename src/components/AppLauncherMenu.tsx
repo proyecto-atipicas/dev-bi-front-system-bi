@@ -47,6 +47,16 @@ const ITEMS: LauncherItem[] = [
       { label: 'Contraseña', value: 'Pr351d3nc14*2026' },
     ],
   },
+  // https://portafolio-servicios-bi.vercel.app/servicio/reporteria
+  {
+    id: 'portafolio',
+    title: 'Portafolio de Servicios',
+    description:
+      'Portafolio de servicios de la empresa.',
+    icon: SquareStack,
+    iconClass: 'text-violet-600',
+    href: 'https://portafolio-servicios-bi.vercel.app/',
+  },
   {
     id: 'appbi',
     title: 'AppBI',
