@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #1e293b;
+}
+
+.dark {
+  --background: #0b0f17;
+  --foreground: #e2e8f0;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -15,4 +23,151 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Launcher: entrada de pestaña + tiles con stagger (AppLauncherMenu) */
+@keyframes launcher-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes launcher-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.launcher-tab-panel-inner {
+  animation: launcher-fade-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.launcher-section-head {
+  animation: launcher-fade-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--section-delay, 0) * 55ms + 40ms);
+}
+
+.launcher-tile-wrap {
+  animation: launcher-tile-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--tile-delay, 0) * 38ms + 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launcher-tab-panel-inner,
+  .launcher-section-head,
+  .launcher-tile-wrap {
+    animation: none !important;
+    animation-delay: 0ms !important;
+  }
+
+  .launcher-blob-inner,
+  .launcher-blob-inner--b,
+  .launcher-blob-inner--c,
+  .launcher-particle-dot,
+  .launcher-tile-mark-pulse {
+    animation: none !important;
+  }
+
+  .launcher-tile-ripple {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* --- Launcher: fondo (gradiente en movimiento + partículas) --- */
+@keyframes launcher-blob-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(14px, -16px, 0) scale(1.03);
+  }
+  66% {
+    transform: translate3d(-10px, 12px, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(6px, 8px, 0) scale(1);
+  }
+}
+
+.launcher-blob-inner {
+  animation: launcher-blob-drift 34s ease-in-out infinite;
+}
+
+.launcher-blob-inner--b {
+  animation-duration: 40s;
+  animation-delay: -11s;
+}
+
+.launcher-blob-inner--c {
+  animation-duration: 28s;
+  animation-delay: -19s;
+}
+
+@keyframes launcher-particle-float {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate3d(5px, -16px, 0);
+  }
+}
+
+.launcher-particle-dot {
+  animation-name: launcher-particle-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* --- Launcher: ícono pulse muy suave (vivo pero discreto) --- */
+@keyframes launcher-mark-micro-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.93;
+    transform: scale(1.025);
+  }
+}
+
+.launcher-tile-mark-pulse {
+  animation: launcher-mark-micro-pulse 4.8s ease-in-out infinite;
+}
+
+/* --- Launcher: ripple al click --- */
+@keyframes launcher-ripple-fade {
+  to {
+    transform: translate(-50%, -50%) scale(2.6);
+    opacity: 0;
+  }
+}
+
+.launcher-tile-ripple {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  width: 120%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.35);
+  opacity: 0.55;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.28) 0%, transparent 72%);
+  animation: launcher-ripple-fade 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dark .launcher-tile-ripple {
+  background: radial-gradient(circle, rgba(196, 181, 253, 0.26) 0%, transparent 72%);
 }
