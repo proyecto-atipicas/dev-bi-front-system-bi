@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 const themeInitScript = `(() => {
   try {
     const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = stored ? stored === 'dark' : prefersDark;
+    // Por defecto modo oscuro; solo modo claro si el usuario lo eligió explícitamente.
+    const isDark = stored !== 'light';
     document.documentElement.classList.toggle('dark', isDark);
   } catch {}
 })();`;

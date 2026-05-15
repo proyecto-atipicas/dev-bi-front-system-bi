@@ -21,11 +21,9 @@ import {
   LineChart,
   Map,
   Monitor,
-  Moon,
   Settings,
   SquareStack,
   Star,
-  Sun,
   X,
 } from 'lucide-react';
 import { API } from '@/lib/constants';
@@ -353,16 +351,20 @@ function LauncherMark({
 
 type Theme = 'light' | 'dark';
 
-/** Lee/escribe el tema en `localStorage` y mantiene la clase `dark` en `<html>`. */
-function useTheme(): { theme: Theme; toggle: () => void; mounted: boolean } {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+/** Lee/escribe el tema en `localStorage` y mantiene la clase `dark` en `<html>`. Por defecto oscuro. */
+function useTheme(): { theme: Theme; toggle: () => void } {
+  const [theme, setTheme] = useState<Theme>(() =>
+    typeof document !== 'undefined' &&
+    !document.documentElement.classList.contains('dark')
+      ? 'light'
+      : 'dark'
+  );
 
   useEffect(() => {
-    const initial: Theme =
-      document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    const initial: Theme = document.documentElement.classList.contains('dark')
+      ? 'dark'
+      : 'light';
     setTheme(initial);
-    setMounted(true);
   }, []);
 
   const toggle = () => {
@@ -376,7 +378,7 @@ function useTheme(): { theme: Theme; toggle: () => void; mounted: boolean } {
     });
   };
 
-  return { theme, toggle, mounted };
+  return { theme, toggle };
 }
 
 /** Tab activo con persistencia en `localStorage`. */
@@ -661,7 +663,7 @@ function AppPreviewModal({
           {credentials.length > 0 && (
             <div className="px-4 sm:px-5 py-4">
               <h4 className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden />
+                <KeyRound className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400/95" strokeWidth={2} aria-hidden />
                 Credenciales
               </h4>
               <div className="space-y-2">
@@ -882,10 +884,14 @@ function LauncherTile({
       </div>
       {!!item.credentials?.length && !disabled && (
         <span
-          className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-50 shadow-sm shadow-amber-900/10 ring-1 ring-amber-300/90 dark:bg-amber-500/15 dark:shadow-amber-900/40 dark:ring-amber-400/45 pointer-events-none"
+          className="pointer-events-none absolute -right-0.5 -top-0.5 z-[110] flex h-[18px] w-[18px] items-center justify-center rounded-md border border-slate-200/95 bg-gradient-to-b from-white to-slate-50/95 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_3px_8px_-2px_rgba(15,23,42,0.12)] ring-1 ring-white/80 backdrop-blur-sm dark:border-slate-600/80 dark:from-slate-800 dark:to-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)] dark:ring-white/5"
           aria-label="Tiene credenciales"
         >
-          <KeyRound className="h-2.5 w-2.5 text-amber-600 dark:text-amber-400" aria-hidden />
+          <KeyRound
+            className="h-[11px] w-[11px] shrink-0 text-amber-600 dark:text-amber-400"
+            strokeWidth={2.15}
+            aria-hidden
+          />
         </span>
       )}
     </div>
@@ -965,41 +971,39 @@ function LauncherTile({
   );
 }
 
-function ThemeToggle({
-  theme,
-  onToggle,
-  mounted,
-}: {
-  theme: Theme;
-  onToggle: () => void;
-  mounted: boolean;
-}) {
+function ThemeSwitch({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   const isDark = theme === 'dark';
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-      title={isDark ? 'Tema claro' : 'Tema oscuro'}
-      aria-pressed={isDark}
-      className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
-    >
-      {/* Render placeholder hasta hidratar para evitar mismatch entre servidor y cliente */}
-      {!mounted ? (
-        <span className="block w-4 h-4" aria-hidden />
-      ) : isDark ? (
-        <Sun className="w-4 h-4" aria-hidden />
-      ) : (
-        <Moon className="w-4 h-4" aria-hidden />
-      )}
-    </button>
+    <div className="flex items-center gap-2 rounded-full border border-gray-200/70 bg-white/50 hadow-sm backdrop-blur-sm dark:border-gray-700/60 dark:bg-gray-900/40 dark:shadow-none">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isDark}
+        aria-label={isDark ? 'Modo oscuro activo. Cambiar a modo claro' : 'Modo claro activo. Cambiar a modo oscuro'}
+        onClick={onToggle}
+        suppressHydrationWarning
+        className={`relative h-[26px] w-[48px] shrink-0 cursor-pointer rounded-full p-[3px] transition-[background,box-shadow,border-color] duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950 ${
+          isDark
+            ? 'border border-violet-600/35 bg-gradient-to-b from-violet-500 to-violet-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_1px_2px_rgba(15,23,42,0.08),0_2px_8px_-2px_rgba(91,33,182,0.35)] dark:border-violet-400/25 dark:from-violet-500 dark:to-violet-800 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_10px_-2px_rgba(0,0,0,0.45)]'
+            : 'border border-gray-200/90 bg-gradient-to-b from-gray-100 to-gray-200/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(15,23,42,0.05)] dark:border-gray-600/80 dark:from-gray-700 dark:to-gray-800 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.2)]'
+        }`}
+      >
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute left-[3px] top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-gradient-to-b from-white to-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_1px_2px_rgba(15,23,42,0.08),0_2px_6px_-1px_rgba(15,23,42,0.18)] ring-1 ring-black/[0.06] transition-transform duration-300 ease-[cubic-bezier(0.34,1.45,0.64,1)] will-change-transform dark:from-gray-100 dark:to-gray-200 dark:ring-black/20 ${
+            isDark ? 'translate-x-[22px]' : 'translate-x-0'
+          }`}
+        />
+        <span className="sr-only">{isDark ? 'Oscuro' : 'Claro'}</span>
+      </button>
+    </div>
   );
 }
 
 export function AppLauncherMenu({ appTitle = 'Herramientas Data BI - CNE', onLogout }: AppLauncherMenuProps) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [previewItem, setPreviewItem] = useState<LauncherItem | null>(null);
-  const { theme, toggle, mounted } = useTheme();
+  const { theme, toggle } = useTheme();
   const { toasts, push: pushToast } = useToasts();
   const { tab: activeTab, setTab } = useActiveTab();
 
@@ -1077,7 +1081,7 @@ export function AppLauncherMenu({ appTitle = 'Herramientas Data BI - CNE', onLog
           priority
         />
         <div className="flex items-center gap-3 shrink-0">
-          <ThemeToggle theme={theme} onToggle={toggle} mounted={mounted} />
+          <ThemeSwitch theme={theme} onToggle={toggle} />
           <button
             type="button"
             onClick={handleCerrarSesion}
